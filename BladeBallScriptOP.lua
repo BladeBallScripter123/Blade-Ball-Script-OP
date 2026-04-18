@@ -189,3 +189,4 @@ BtnCorner.CornerRadius = UDim.new(0, 8)
 ToggleBtn.MouseButton1Click:Connect(function()
     spamEnabled = not spamEnabled
     ToggleBtn.Text = spamEnabled and "SPAM: ON" or "SPAM: OFF"
+end)
