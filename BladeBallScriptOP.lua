@@ -153,9 +153,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 
     if input.KeyCode == Enum.KeyCode.G then
         spamEnabled = not spamEnabled
-        if toggle then
-    toggle.Text = spamEnabled and "SPAM: ON" or "SPAM: OFF"
-      end
+        ToggleBtn.Text = spamEnabled and "SPAM: ON" or "SPAM: OFF"
     end
 end)
 
