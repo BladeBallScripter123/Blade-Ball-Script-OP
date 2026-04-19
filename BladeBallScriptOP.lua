@@ -157,25 +157,22 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
---// UI ROOT
 local gui = Instance.new("ScreenGui")
 gui.Name = "UI"
 gui.ResetOnSpawn = false
 gui.Parent = game.CoreGui 
 
-local uiVisible = true 
-
---// MAIN FRAME
 local main = Instance.new("Frame")
 main.Parent = gui
 main.Size = UDim2.new(0, 360, 0, 220)
 main.Position = UDim2.new(0.05, 0, 0.35, 0)
 main.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
-main.BorderSizePixel = 0 
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true 
 
 Instance.new("UICorner", main).CornerRadius = UDim.new(0, 8) 
 
---// TOP BAR
 local top = Instance.new("Frame")
 top.Parent = main
 top.Size = UDim2.new(1, 0, 0, 32)
@@ -193,50 +190,37 @@ title.TextColor3 = Color3.fromRGB(255,255,255)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 14 
 
---// DRAG (MOUSE + TOUCH)
-local dragging = false
-local dragStart, startPos 
+local tabs = Instance.new("Frame")
+tabs.Parent = main
+tabs.Size = UDim2.new(0, 100, 1, -32)
+tabs.Position = UDim2.new(0, 0, 0, 32)
+tabs.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
+tabs.BorderSizePixel = 0 
 
-top.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = main.Position
-    end
-end) 
-
-top.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement
-    or input.UserInputType == Enum.UserInputType.Touch) then 
-
-        local delta = input.Position - dragStart 
-
-        main.Position = UDim2.new(
-            startPos.X.Scale,
-            startPos.X.Offset + delta.X,
-            startPos.Y.Scale,
-            startPos.Y.Offset + delta.Y
-        )
-    end
-end) 
-
-top.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-    or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end) 
-
---// CONTENT
 local content = Instance.new("Frame")
 content.Parent = main
-content.Size = UDim2.new(1, 0, 1, -32)
-content.Position = UDim2.new(0, 0, 0, 32)
+content.Size = UDim2.new(1, -100, 1, -32)
+content.Position = UDim2.new(0, 100, 0, 32)
 content.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 content.BorderSizePixel = 0 
 
---// SPAM TOGGLE
+local function createTab(name, y)
+    local btn = Instance.new("TextButton")
+    btn.Parent = tabs
+    btn.Size = UDim2.new(1, -10, 0, 30)
+    btn.Position = UDim2.new(0, 5, 0, y)
+    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    btn.Text = name
+    btn.TextColor3 = Color3.fromRGB(200,200,200)
+    btn.Font = Enum.Font.Gotham
+    btn.TextSize = 12 
+
+    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+    return btn
+end 
+
+createTab("MAIN", 5) 
+
 local toggle = Instance.new("TextButton")
 toggle.Parent = content
 toggle.Size = UDim2.new(0, 180, 0, 40)
@@ -249,7 +233,7 @@ toggle.TextSize = 13
 
 Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 6) 
 
-local function updateUI()
+local function update()
     toggle.Text = spamEnabled and "MANUAL SPAM: ON" or "MANUAL SPAM: OFF"
     toggle.BackgroundColor3 = spamEnabled and Color3.fromRGB(60,160,60)
         or Color3.fromRGB(35,35,35)
@@ -257,43 +241,7 @@ end
 
 toggle.MouseButton1Click:Connect(function()
     spamEnabled = not spamEnabled
-    updateUI()
+    update()
 end) 
 
---// MOBILE BUTTON (IMPORTANT)
-local mobileToggle = Instance.new("TextButton")
-mobileToggle.Parent = gui
-mobileToggle.Size = UDim2.new(0, 140, 0, 40)
-mobileToggle.Position = UDim2.new(0, 10, 0.75, 0)
-mobileToggle.BackgroundColor3 = Color3.fromRGB(30,30,30)
-mobileToggle.Text = "TOGGLE SPAM"
-mobileToggle.TextColor3 = Color3.fromRGB(255,255,255)
-mobileToggle.Font = Enum.Font.GothamBold
-mobileToggle.TextSize = 12 
-
-Instance.new("UICorner", mobileToggle).CornerRadius = UDim.new(0, 6) 
-
-mobileToggle.MouseButton1Click:Connect(function()
-    spamEnabled = not spamEnabled
-    updateUI()
-end) 
-
---// OPEN / CLOSE UI BUTTON
-local openBtn = Instance.new("TextButton")
-openBtn.Parent = gui
-openBtn.Size = UDim2.new(0, 120, 0, 30)
-openBtn.Position = UDim2.new(0, 10, 0.2, 0)
-openBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
-openBtn.TextColor3 = Color3.fromRGB(240, 240, 240)
-openBtn.Font = Enum.Font.GothamBold
-openBtn.TextSize = 12
-openBtn.Text = "TOGGLE UI" 
-
-Instance.new("UICorner", openBtn).CornerRadius = UDim.new(0, 8) 
-
-openBtn.MouseButton1Click:Connect(function()
-    uiVisible = not uiVisible
-    main.Visible = uiVisible
-end) 
-
-updateUI()
+update()
