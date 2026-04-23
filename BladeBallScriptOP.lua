@@ -9,152 +9,152 @@ local revertedRemotes = {}
 local spamEnabled = false
 
 local function isValidArgs(args)
-    return #args == 7 and typeof(args[4]) == "CFrame"
+ return #args == 7 and typeof(args[4]) == "CFrame"
 end
 
 local function hookRemote(remote)
-    local mt = getrawmetatable(remote)
-    if not mt then return end
+ local mt = getrawmetatable(remote)
+ if not mt then return end
 
-    setreadonly(mt, false)
-    local old = mt.__index
+ setreadonly(mt, false)
+ local old = mt.__index
 
-    mt.__index = function(self, key)
-        if key == "FireServer" then
-            return function(obj, ...)
-                local args = {...}
+ mt.__index = function(self, key)
+ if key == "FireServer" then
+ return function(obj, ...)
+ local args = {...}
 
-                if isValidArgs(args) and not revertedRemotes[obj] then
-                    revertedRemotes[obj] = args
-                end
+ if isValidArgs(args) and not revertedRemotes[obj] then
+ revertedRemotes[obj] = args
+ end
 
-                return old(self, key)(obj, ...)
-            end
-        end
+ return old(self, key)(obj, ...)
+ end
+ end
 
-        return old(self, key)
-    end
+ return old(self, key)
+ end
 
-    setreadonly(mt, true)
+ setreadonly(mt, true)
 end
 
 for _, v in pairs(ReplicatedStorage:GetDescendants()) do
-    if v:IsA("RemoteEvent") then
-        hookRemote(v)
-    end
+ if v:IsA("RemoteEvent") then
+ hookRemote(v)
+ end
 end
 
 ReplicatedStorage.DescendantAdded:Connect(function(v)
-    if v:IsA("RemoteEvent") then
-        hookRemote(v)
-    end
+ if v:IsA("RemoteEvent") then
+ hookRemote(v)
+ end
 end)
 
 local function getClosestPlayer(root)
-    local closest = nil
-    local dist = math.huge
+ local closest = nil
+ local dist = math.huge
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local mag = (player.Character.HumanoidRootPart.Position - root.Position).Magnitude
-            if mag < dist then
-                dist = mag
-                closest = player
-            end
-        end
-    end
+ for _, player in pairs(Players:GetPlayers()) do
+ if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+ local mag = (player.Character.HumanoidRootPart.Position - root.Position).Magnitude
+ if mag < dist then
+ dist = mag
+ closest = player
+ end
+ end
+ end
 
-    return closest
+ return closest
 end
 
 local function getCrosshairPlayer()
-    local closest = nil
-    local closestDot = -1
+ local closest = nil
+ local closestDot = -1
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local rootPart = player.Character.HumanoidRootPart
+ for _, player in pairs(Players:GetPlayers()) do
+ if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+ local rootPart = player.Character.HumanoidRootPart
 
-            local direction = (rootPart.Position - Camera.CFrame.Position).Unit
-            local dot = direction:Dot(Camera.CFrame.LookVector)
+ local direction = (rootPart.Position - Camera.CFrame.Position).Unit
+ local dot = direction:Dot(Camera.CFrame.LookVector)
 
-            if dot > closestDot then
-                closestDot = dot
-                closest = player
-            end
-        end
-    end
+ if dot > closestDot then
+ closestDot = dot
+ closest = player
+ end
+ end
+ end
 
-    return closest
+ return closest
 end
 
 local function doParry()
-    local char = LocalPlayer.Character
-    local root = char and char:FindFirstChild("HumanoidRootPart")
-    if not root then return end
+ local char = LocalPlayer.Character
+ local root = char and char:FindFirstChild("HumanoidRootPart")
+ if not root then return end
 local targetPlayer = getCrosshairPlayer() 
 
 local targetRoot = nil
 if targetPlayer and targetPlayer.Character then
-    targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+ targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
 end 
 
 if not targetRoot then
-    targetRoot = root
+ targetRoot = root
 end
 
-    for remote, args in pairs(revertedRemotes) do
-        local targets = {}
+ for remote, args in pairs(revertedRemotes) do
+ local targets = {}
 
-        for k, v in pairs(args[5]) do
-            if typeof(v) == "Vector3" then
+ for k, v in pairs(args[5]) do
+ if typeof(v) == "Vector3" then
 
-                local dist = (v - targetRoot.Position).Magnitude
+ local dist = (v - targetRoot.Position).Magnitude
 
-                if dist < 10 then
-                    targets[k] = targetRoot.Position
-                else
-                    targets[k] = v
-                end
-            else
-                targets[k] = v
-            end
-        end
+ if dist < 10 then
+ targets[k] = targetRoot.Position
+ else
+ targets[k] = v
+ end
+ else
+ targets[k] = v
+ end
+ end
 
-        local newArgs = {
-            args[1],
-            args[2],
-            args[3],
-            Camera.CFrame,
-            targets,
-            args[6],
-            args[7]
-        }
+ local newArgs = {
+ args[1],
+ args[2],
+ args[3],
+ Camera.CFrame,
+ targets,
+ args[6],
+ args[7]
+ }
 
-        pcall(function()
-            remote:FireServer(unpack(newArgs))
-        end)
-    end
+ pcall(function()
+ remote:FireServer(unpack(newArgs))
+ end)
+ end
 end
 
 task.spawn(function()
-    while true do
-        if spamEnabled then
-            doParry()
-            task.wait(0.001)
-        else
-            task.wait(0.1)
-        end
-    end
+ while true do
+ if spamEnabled then
+ doParry()
+ task.wait(0.001)
+ else
+ task.wait(0.1)
+ end
+ end
 end)
 
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
-    if gameProcessed then return end
+ if gameProcessed then return end
 
-    if input.KeyCode == Enum.KeyCode.G then
-        spamEnabled = not spamEnabled
-        ToggleBtn.Text = spamEnabled and "SPAM: ON" or "SPAM: OFF"
-    end
+ if input.KeyCode == Enum.KeyCode.G then
+ spamEnabled = not spamEnabled
+ ToggleBtn.Text = spamEnabled and "SPAM: ON" or "SPAM: OFF"
+ end
 end)
 
 local gui = Instance.new("ScreenGui")
@@ -205,18 +205,18 @@ content.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
 content.BorderSizePixel = 0 
 
 local function createTab(name, y)
-    local btn = Instance.new("TextButton")
-    btn.Parent = tabs
-    btn.Size = UDim2.new(1, -10, 0, 30)
-    btn.Position = UDim2.new(0, 5, 0, y)
-    btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
-    btn.Text = name
-    btn.TextColor3 = Color3.fromRGB(200,200,200)
-    btn.Font = Enum.Font.Gotham
-    btn.TextSize = 12 
+ local btn = Instance.new("TextButton")
+ btn.Parent = tabs
+ btn.Size = UDim2.new(1, -10, 0, 30)
+ btn.Position = UDim2.new(0, 5, 0, y)
+ btn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+ btn.Text = name
+ btn.TextColor3 = Color3.fromRGB(200,200,200)
+ btn.Font = Enum.Font.Gotham
+ btn.TextSize = 12 
 
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
-    return btn
+ Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 6)
+ return btn
 end 
 
 createTab("MAIN", 5) 
@@ -234,14 +234,14 @@ toggle.TextSize = 13
 Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 6) 
 
 local function update()
-    toggle.Text = spamEnabled and "MANUAL SPAM: ON" or "MANUAL SPAM: OFF"
-    toggle.BackgroundColor3 = spamEnabled and Color3.fromRGB(60,160,60)
-        or Color3.fromRGB(35,35,35)
+ toggle.Text = spamEnabled and "MANUAL SPAM: ON" or "MANUAL SPAM: OFF"
+ toggle.BackgroundColor3 = spamEnabled and Color3.fromRGB(60,160,60)
+ or Color3.fromRGB(35,35,35)
 end 
 
 toggle.MouseButton1Click:Connect(function()
-    spamEnabled = not spamEnabled
-    update()
+ spamEnabled = not spamEnabled
+ update()
 end) 
 
 update()
